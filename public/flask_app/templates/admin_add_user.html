@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Add Admin User{% endblock %}
+{% block head %}
+<style>
+  .form-card { background: white; border-radius: 18px; border: 1px solid var(--border); box-shadow: var(--shadow); max-width: 440px; margin: 2rem auto; overflow: hidden; }
+  .form-card-header { background: linear-gradient(135deg, #1a3d1b, #2c5f2e); padding: 1.75rem 2rem; color: white; }
+  .form-card-header h2 { font-family: 'Playfair Display', serif; margin: 0; font-size: 1.5rem; }
+  .form-card-body { padding: 2rem; }
+  .form-actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="breadcrumb" style="margin-bottom:1.5rem;">
+  <a href="{{ url_for('admin_dashboard') }}">Admin</a> / <a href="{{ url_for('admin_users') }}">Users</a> / <span>Add User</span>
+</div>
+
+<div class="form-card">
+  <div class="form-card-header">
+    <h2><i class="fas fa-user-plus"></i> Create New Admin User</h2>
+  </div>
+  <div class="form-card-body">
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" required placeholder="e.g. auntmary" autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" required placeholder="Choose a secure password">
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Create User</button>
+        <a href="{{ url_for('admin_users') }}" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

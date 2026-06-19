@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ member.name }}{% endblock %}
+{% block head %}
+<style>
+  .form-card {
+    background: white; border-radius: 20px; border: 1px solid var(--border);
+    box-shadow: var(--shadow); overflow: hidden; max-width: 750px; margin: 0 auto;
+  }
+  .form-card-header {
+    background: linear-gradient(135deg, var(--accent) 0%, #c8961a 100%);
+    padding: 2rem; color: var(--primary-dark);
+  }
+  .form-card-header h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 0.25rem; }
+  .form-card-header p { color: rgba(0,0,0,0.55); }
+  .form-card-body { padding: 2rem; }
+  .section-divider { font-weight: 700; color: var(--primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin: 2rem 0 1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .photo-upload-area {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 1.5rem;
+    text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg);
+    display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; justify-content: center;
+  }
+  .photo-upload-area:hover { border-color: var(--primary); }
+  #current-photo, #photo-preview {
+    width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent);
+  }
+  .photo-initials-sm {
+    width: 100px; height: 100px; border-radius: 50%; background: var(--primary);
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem; font-weight: 700; border: 3px solid var(--accent);
+    font-family: 'Playfair Display', serif;
+  }
+  #photo-preview { display: none; }
+  input[type="file"] { display: none; }
+  .form-actions { display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap; }
+  .checkbox-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: 8px; padding: 0.75rem; }
+  .checkbox-item { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.3rem; border-radius: 6px; transition: background 0.15s; }
+  .checkbox-item:hover { background: var(--bg); }
+  .checkbox-item input { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+  .checkbox-item label { cursor: pointer; font-size: 0.9rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="breadcrumb" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.5rem; color:var(--text-muted); font-size:0.9rem;">
+  <a href="{{ url_for('index') }}" style="color:var(--primary); text-decoration:none;"><i class="fas fa-home"></i> Home</a>
+  <i class="fas fa-chevron-right"></i>
+  <a href="{{ url_for('member_detail', member_id=member.id) }}" style="color:var(--primary); text-decoration:none;">{{ member.name }}</a>
+  <i class="fas fa-chevron-right"></i>
+  <span>Edit</span>
+</div>
+
+<div class="form-card">
+  <div class="form-card-header">
+    <h2><i class="fas fa-user-edit"></i> Edit {{ member.name }}</h2>
+    <p>Update the information for this family member.</p>
+  </div>
+  <div class="form-card-body">
+    <form method="POST" enctype="multipart/form-data">
+
+      <div class="section-divider"><i class="fas fa-camera"></i> Profile Photo</div>
+      <div class="photo-upload-area" onclick="document.getElementById('photo').click()">
+        {% if member.photo %}
+          <img id="current-photo" src="{{ url_for('static', filename='uploads/' + member.photo) }}" alt="Current photo"/>
+        {% else %}
+          <div class="photo-initials-sm">{{ member.name.split()[0][0] }}{{ member.name.split()[-1][0] if member.name.split()|length > 1 else '' }}</div>
+        {% endif %}
+        <img id="photo-preview" src="" alt="New photo preview"/>
+        <div>
+          <p style="font-weight:600; color:var(--primary);">Click to change photo</p>
+          <p style="color:var(--text-muted); font-size:0.85rem;">JPG, PNG, GIF or WEBP — max 16MB</p>
+        </div>
+      </div>
+      <input type="file" id="photo" name="photo" accept="image/*" onchange="previewPhoto(this)"/>
+
+      <div class="section-divider"><i class="fas fa-id-card"></i> Personal Information</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-user"></i> Full Name *</label>
+          <input type="text" name="name" class="form-control" value="{{ member.name }}" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-tag"></i> Role in Family</label>
+          <input type="text" name="role" class="form-control" value="{{ member.role }}"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-calendar-plus"></i> Birth Year</label>
+          <input type="text" name="birth_year" class="form-control" value="{{ member.birth_year }}"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-calendar-minus"></i> Death Year</label>
+          <input type="text" name="death_year" class="form-control" value="{{ member.death_year }}"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-map-marker-alt"></i> Birthplace</label>
+          <input type="text" name="birth_place" class="form-control" value="{{ member.birth_place }}"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-briefcase"></i> Occupation</label>
+          <input type="text" name="occupation" class="form-control" value="{{ member.occupation }}"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-layer-group"></i> Generation</label>
+        <select name="generation" class="form-control">
+          {% for g in [1,2,3,4] %}
+          <option value="{{ g }}" {% if member.generation == g %}selected{% endif %}>
+            Generation {{ g }} — {% if g==1 %}Grandparents{% elif g==2 %}Parents & Relatives{% elif g==3 %}Children & Cousins{% else %}Grandchildren{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-quote-left"></i> Biography</label>
+        <textarea name="bio" class="form-control" rows="4">{{ member.bio }}</textarea>
+      </div>
+
+      <div class="section-divider"><i class="fas fa-heart"></i> Family Connections</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-users"></i> Parents</label>
+          <div class="checkbox-list">
+            {% for m in members %}
+            {% if m.id != member.id %}
+            <div class="checkbox-item">
+              <input type="checkbox" name="parent_ids" value="{{ m.id }}" id="p_{{ m.id }}"
+                     {% if m.id in member.parent_ids %}checked{% endif %}/>
+              <label for="p_{{ m.id }}">{{ m.name }} <span style="color:var(--text-muted)">({{ m.role }})</span></label>
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-ring"></i> Spouse / Partner</label>
+          <select name="spouse_id" class="form-control">
+            <option value="">— None —</option>
+            {% for m in members %}
+            {% if m.id != member.id %}
+            <option value="{{ m.id }}" {% if member.spouse_id == m.id %}selected{% endif %}>{{ m.name }} ({{ m.role }})</option>
+            {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-accent"><i class="fas fa-save"></i> Save Changes</button>
+        <a href="{{ url_for('member_detail', member_id=member.id) }}" class="btn btn-outline"><i class="fas fa-times"></i> Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const preview = document.getElementById('photo-preview');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      const current = document.getElementById('current-photo');
+      if (current) current.style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

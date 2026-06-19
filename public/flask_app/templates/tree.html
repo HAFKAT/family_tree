@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Family Tree View{% endblock %}
+{% block head %}
+<style>
+  .tree-page-header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    border-radius: 20px; padding: 2rem; margin-bottom: 2rem;
+    text-align: center; color: white;
+  }
+  .tree-page-header h1 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 0.3rem; }
+  .tree-page-header p { color: rgba(255,255,255,0.75); }
+
+  .tree-container {
+    background: white; border-radius: 20px; border: 1px solid var(--border);
+    box-shadow: var(--shadow); padding: 2rem; overflow-x: auto;
+  }
+  .tree-gen-wrap { display: flex; flex-direction: column; gap: 0; }
+
+  .tree-gen {
+    display: flex; flex-direction: column; align-items: center; position: relative;
+    margin-bottom: 0;
+  }
+  .tree-gen-label {
+    font-family: 'Playfair Display', serif; font-size: 0.85rem;
+    color: var(--primary); font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; margin-bottom: 1rem;
+    background: rgba(44,95,46,0.08); padding: 0.3rem 1.2rem;
+    border-radius: 20px; border: 1px solid var(--primary-light);
+  }
+  .tree-row { display: flex; gap: 1.5rem; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+
+  /* CONNECTOR */
+  .gen-connector {
+    width: 2px; background: linear-gradient(to bottom, var(--primary-light), var(--accent));
+    height: 50px; margin: 0 auto;
+  }
+  .horizontal-connector {
+    display: flex; justify-content: center;
+    margin: 0 auto; padding: 0 1rem;
+  }
+
+  .tree-member {
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    cursor: pointer; transition: all 0.2s;
+    text-decoration: none; color: inherit;
+    position: relative;
+  }
+  .tree-member:hover .tree-card { box-shadow: var(--shadow-hover); transform: translateY(-3px); }
+
+  .tree-card {
+    background: white; border-radius: 14px; border: 2px solid var(--border);
+    box-shadow: var(--shadow); padding: 1rem 0.75rem; text-align: center;
+    width: 130px; transition: all 0.2s;
+  }
+  .tree-card:hover { border-color: var(--accent); }
+  .tree-photo, .tree-initials {
+    width: 64px; height: 64px; border-radius: 50%;
+    border: 3px solid var(--accent); object-fit: cover; margin: 0 auto 0.5rem;
+  }
+  .tree-initials {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white; font-size: 1.4rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+  }
+  .tree-name { font-size: 0.82rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+  .tree-role {
+    font-size: 0.7rem; background: var(--primary); color: white;
+    padding: 0.15rem 0.5rem; border-radius: 20px; display: inline-block; margin-top: 0.2rem;
+  }
+  .tree-years { font-size: 0.68rem; color: var(--text-muted); }
+  .tree-deceased .tree-card { border-color: #9ca3af; }
+  .tree-deceased .tree-initials { background: #6b7280; }
+  .deceased-icon { font-size: 0.65rem; color: #9ca3af; }
+
+  /* SPOUSE LINE */
+  .couple-wrap { display: flex; align-items: center; gap: 0; }
+  .spouse-line {
+    width: 30px; height: 2px;
+    background: var(--accent); position: relative;
+  }
+  .spouse-line::after {
+    content: '♥'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    color: var(--accent); font-size: 0.8rem;
+  }
+
+  .legend { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; padding: 1rem 1.5rem; background: var(--bg); border-radius: 10px; border: 1px solid var(--border); }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: var(--text-muted); }
+  .legend-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="tree-page-header">
+  <h1><i class="fas fa-sitemap"></i> Interactive Family Tree</h1>
+  <p>Visual overview of all family connections across generations</p>
+</div>
+
+<div class="legend">
+  <strong style="font-size:0.85rem; color:var(--text);">Legend:</strong>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent); border-color:var(--accent);"></div> Spouse Link</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--primary); border-color:var(--primary);"></div> Active Member</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#9ca3af; border-color:#9ca3af;"></div> Deceased</div>
+  <div style="margin-left:auto;">
+    <a href="{{ url_for('add_member') }}" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Add Member</a>
+  </div>
+</div>
+
+<div class="tree-container">
+  {% set gen_labels = {1: 'Generation I — Grandparents', 2: 'Generation II — Parents & Relatives', 3: 'Generation III — Children & Cousins', 4: 'Generation IV — Grandchildren'} %}
+  {% set all_gens = members | map(attribute='generation') | list | unique | sort %}
+
+  <div class="tree-gen-wrap">
+    {% for gen in all_gens %}
+      {% set gen_members = members | selectattr('generation', 'equalto', gen) | list %}
+      {% if not loop.first %}
+        <div class="gen-connector"></div>
+      {% endif %}
+      <div class="tree-gen">
+        <div class="tree-gen-label">{{ gen_labels.get(gen, 'Generation ' ~ gen) }}</div>
+        <div class="tree-row">
+          {% set processed_couples = [] %}
+          {% for member in gen_members %}
+            {% set spouse = namespace(found=none) %}
+            {% for m in gen_members %}
+              {% if m.id == member.spouse_id %}
+                {% set spouse.found = m %}
+              {% endif %}
+            {% endfor %}
+
+            {% if spouse.found and member.id not in processed_couples %}
+              <!-- Couple -->
+              <div class="couple-wrap">
+                <a href="{{ url_for('member_detail', member_id=member.id) }}" class="tree-member {% if member.death_year %}tree-deceased{% endif %}">
+                  <div class="tree-card">
+                    {% if member.photo %}
+                      <img src="{{ url_for('static', filename='uploads/' + member.photo) }}" alt="{{ member.name }}" class="tree-photo"/>
+                    {% else %}
+                      <div class="tree-initials">{{ member.name.split()[0][0] }}{{ member.name.split()[-1][0] if member.name.split()|length > 1 else '' }}</div>
+                    {% endif %}
+                    <div class="tree-name">{{ member.name }}</div>
+                    <div class="tree-role">{{ member.role }}</div>
+                    <div class="tree-years">{{ member.birth_year }}{% if member.death_year %} – {{ member.death_year }}{% endif %}</div>
+                    {% if member.death_year %}<div class="deceased-icon"><i class="fas fa-dove"></i></div>{% endif %}
+                  </div>
+                </a>
+                <div class="spouse-line"></div>
+                <a href="{{ url_for('member_detail', member_id=spouse.found.id) }}" class="tree-member {% if spouse.found.death_year %}tree-deceased{% endif %}">
+                  <div class="tree-card">
+                    {% if spouse.found.photo %}
+                      <img src="{{ url_for('static', filename='uploads/' + spouse.found.photo) }}" alt="{{ spouse.found.name }}" class="tree-photo"/>
+                    {% else %}
+                      <div class="tree-initials">{{ spouse.found.name.split()[0][0] }}{{ spouse.found.name.split()[-1][0] if spouse.found.name.split()|length > 1 else '' }}</div>
+                    {% endif %}
+                    <div class="tree-name">{{ spouse.found.name }}</div>
+                    <div class="tree-role">{{ spouse.found.role }}</div>
+                    <div class="tree-years">{{ spouse.found.birth_year }}{% if spouse.found.death_year %} – {{ spouse.found.death_year }}{% endif %}</div>
+                    {% if spouse.found.death_year %}<div class="deceased-icon"><i class="fas fa-dove"></i></div>{% endif %}
+                  </div>
+                </a>
+              </div>
+              {% if processed_couples.append(member.id) %}{% endif %}
+              {% if processed_couples.append(spouse.found.id) %}{% endif %}
+
+            {% elif member.id not in processed_couples %}
+              <!-- Single -->
+              <a href="{{ url_for('member_detail', member_id=member.id) }}" class="tree-member {% if member.death_year %}tree-deceased{% endif %}">
+                <div class="tree-card">
+                  {% if member.photo %}
+                    <img src="{{ url_for('static', filename='uploads/' + member.photo) }}" alt="{{ member.name }}" class="tree-photo"/>
+                  {% else %}
+                    <div class="tree-initials">{{ member.name.split()[0][0] }}{{ member.name.split()[-1][0] if member.name.split()|length > 1 else '' }}</div>
+                  {% endif %}
+                  <div class="tree-name">{{ member.name }}</div>
+                  <div class="tree-role">{{ member.role }}</div>
+                  <div class="tree-years">{{ member.birth_year }}{% if member.death_year %} – {{ member.death_year }}{% endif %}</div>
+                  {% if member.death_year %}<div class="deceased-icon"><i class="fas fa-dove"></i></div>{% endif %}
+                </div>
+              </a>
+              {% if processed_couples.append(member.id) %}{% endif %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

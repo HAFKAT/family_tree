@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Add Family Member{% endblock %}
+{% block head %}
+<style>
+  .form-card {
+    background: white; border-radius: 20px; border: 1px solid var(--border);
+    box-shadow: var(--shadow); overflow: hidden; max-width: 750px; margin: 0 auto;
+  }
+  .form-card-header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    padding: 2rem; color: white;
+  }
+  .form-card-header h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 0.25rem; }
+  .form-card-header p { color: rgba(255,255,255,0.75); }
+  .form-card-body { padding: 2rem; }
+  .section-divider { font-weight: 700; color: var(--primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin: 2rem 0 1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .photo-upload-area {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 2rem;
+    text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg);
+  }
+  .photo-upload-area:hover { border-color: var(--primary); background: rgba(44,95,46,0.04); }
+  .photo-upload-area i { font-size: 2.5rem; color: var(--primary); margin-bottom: 0.75rem; display: block; }
+  .photo-upload-area p { color: var(--text-muted); font-size: 0.9rem; }
+  #photo-preview { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); margin: 1rem auto 0; display: none; }
+  .form-actions { display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap; }
+  input[type="file"] { display: none; }
+
+  .checkbox-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: 8px; padding: 0.75rem; }
+  .checkbox-item { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.3rem; border-radius: 6px; transition: background 0.15s; }
+  .checkbox-item:hover { background: var(--bg); }
+  .checkbox-item input { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+  .checkbox-item label { cursor: pointer; font-size: 0.9rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="breadcrumb" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.5rem; color:var(--text-muted); font-size:0.9rem;">
+  <a href="{{ url_for('index') }}" style="color:var(--primary); text-decoration:none;"><i class="fas fa-home"></i> Home</a>
+  <i class="fas fa-chevron-right"></i>
+  <span>Add Family Member</span>
+</div>
+
+<div class="form-card">
+  <div class="form-card-header">
+    <h2><i class="fas fa-user-plus"></i> Add New Family Member</h2>
+    <p>Fill in the details below to add someone to the family tree.</p>
+  </div>
+  <div class="form-card-body">
+    <form method="POST" enctype="multipart/form-data">
+
+      <div class="section-divider"><i class="fas fa-camera"></i> Profile Photo</div>
+      <div class="photo-upload-area" onclick="document.getElementById('photo').click()">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p><strong>Click to upload a photo</strong><br>JPG, PNG, GIF or WEBP — max 16MB</p>
+        <img id="photo-preview" src="" alt="Preview"/>
+      </div>
+      <input type="file" id="photo" name="photo" accept="image/*" onchange="previewPhoto(this)"/>
+
+      <div class="section-divider"><i class="fas fa-id-card"></i> Personal Information</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-user"></i> Full Name *</label>
+          <input type="text" name="name" class="form-control" placeholder="e.g. John Anderson" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-tag"></i> Role in Family *</label>
+          <input type="text" name="role" class="form-control" placeholder="e.g. Father, Grandmother, Cousin"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-calendar-plus"></i> Birth Year</label>
+          <input type="text" name="birth_year" class="form-control" placeholder="e.g. 1965"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-calendar-minus"></i> Death Year (if applicable)</label>
+          <input type="text" name="death_year" class="form-control" placeholder="Leave blank if alive"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-map-marker-alt"></i> Birthplace</label>
+          <input type="text" name="birth_place" class="form-control" placeholder="e.g. Boston, MA"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-briefcase"></i> Occupation</label>
+          <input type="text" name="occupation" class="form-control" placeholder="e.g. Teacher, Engineer"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-layer-group"></i> Generation *</label>
+        <select name="generation" class="form-control" required>
+          <option value="1">Generation 1 — Grandparents / Great-Grandparents</option>
+          <option value="2">Generation 2 — Parents & Relatives</option>
+          <option value="3" selected>Generation 3 — Children & Cousins</option>
+          <option value="4">Generation 4 — Grandchildren</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-quote-left"></i> Biography</label>
+        <textarea name="bio" class="form-control" rows="4" placeholder="Share a story, memory, or description of this person..."></textarea>
+      </div>
+
+      <div class="section-divider"><i class="fas fa-heart"></i> Family Connections</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-users"></i> Parents (select all that apply)</label>
+          <div class="checkbox-list">
+            {% for m in members %}
+            <div class="checkbox-item">
+              <input type="checkbox" name="parent_ids" value="{{ m.id }}" id="p_{{ m.id }}"/>
+              <label for="p_{{ m.id }}">{{ m.name }} <span style="color:var(--text-muted)">({{ m.role }})</span></label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-ring"></i> Spouse / Partner</label>
+          <select name="spouse_id" class="form-control">
+            <option value="">— None —</option>
+            {% for m in members %}
+            <option value="{{ m.id }}">{{ m.name }} ({{ m.role }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add to Family Tree</button>
+        <a href="{{ url_for('index') }}" class="btn btn-outline"><i class="fas fa-times"></i> Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const preview = document.getElementById('photo-preview');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

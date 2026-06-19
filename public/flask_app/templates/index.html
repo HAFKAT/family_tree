@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block head %}
+<style>
+  .hero {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
+    border-radius: 20px; padding: 3rem 2rem; text-align: center;
+    margin-bottom: 2.5rem; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-icon { font-size: 4rem; color: var(--accent); margin-bottom: 1rem; position: relative; }
+  .hero h1 { font-family: 'Playfair Display', serif; font-size: 2.8rem; color: #fff; margin-bottom: 0.5rem; position: relative; }
+  .hero p { color: rgba(255,255,255,0.8); font-size: 1.1rem; max-width: 500px; margin: 0 auto 1.5rem; position: relative; }
+  .hero-stats { display: flex; gap: 2rem; justify-content: center; position: relative; flex-wrap: wrap; }
+  .hero-stat { text-align: center; }
+  .hero-stat-num { font-size: 2rem; font-weight: 700; color: var(--accent); font-family: 'Playfair Display', serif; }
+  .hero-stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 1px; }
+
+  .section-title {
+    display: flex; align-items: center; gap: 0.75rem;
+    font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--primary-dark);
+    margin-bottom: 1.5rem; padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--accent);
+  }
+  .section-title i { color: var(--accent); }
+  .generation-section { margin-bottom: 3rem; }
+
+  .members-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.25rem; }
+
+  .member-card {
+    background: white; border-radius: 16px; border: 1px solid var(--border);
+    box-shadow: var(--shadow); overflow: hidden; transition: all 0.25s;
+    text-decoration: none; color: inherit; display: block;
+  }
+  .member-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-4px); }
+  .member-card-top {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    padding: 1.5rem 1rem 1rem; text-align: center; position: relative;
+  }
+  .member-photo-wrap { position: relative; display: inline-block; }
+  .member-photo, .member-initials {
+    width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--accent);
+    object-fit: cover; display: block; margin: 0 auto;
+  }
+  .member-initials {
+    background: rgba(255,255,255,0.15); color: white;
+    font-size: 2rem; font-weight: 700; font-family: 'Playfair Display', serif;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .deceased-badge {
+    position: absolute; bottom: 0; right: -5px;
+    background: #6b7280; color: white; border-radius: 50%;
+    width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; border: 2px solid white;
+  }
+  .member-card-body { padding: 1rem; text-align: center; }
+  .member-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
+  .member-role {
+    display: inline-block; background: var(--primary); color: white;
+    padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+    margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .member-years { color: var(--text-muted); font-size: 0.82rem; }
+  .member-occupation { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.25rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem; }
+
+  .search-bar { display: flex; gap: 0.75rem; margin-bottom: 2rem; }
+  .search-input {
+    flex: 1; padding: 0.75rem 1.2rem; border-radius: 10px;
+    border: 2px solid var(--border); font-size: 0.95rem; font-family: inherit;
+  }
+  .search-input:focus { outline: none; border-color: var(--primary); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="hero">
+  <div class="hero-icon"><i class="fas fa-tree"></i></div>
+  <h1>Anderson Family Tree</h1>
+  <p>Preserving our family heritage — stories, memories, and connections across generations</p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-num">{{ members|length }}</div>
+      <div class="hero-stat-label">Members</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">{{ sorted_gens|length }}</div>
+      <div class="hero-stat-label">Generations</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">{{ members|selectattr('death_year')|list|length }}</div>
+      <div class="hero-stat-label">Passed Away</div>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex; gap:0.75rem; margin-bottom:2rem; flex-wrap:wrap;">
+  <input type="text" id="searchInput" class="search-input" placeholder="🔍  Search family members by name, role, or occupation..." oninput="filterMembers()" style="flex:1; min-width:200px;"/>
+  <a href="{{ url_for('tree') }}" class="btn btn-outline"><i class="fas fa-sitemap"></i> View Family Tree</a>
+  <a href="{{ url_for('add_member') }}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add Member</a>
+</div>
+
+<div id="allMembers">
+  {% for gen in sorted_gens %}
+  <div class="generation-section" data-gen="{{ gen }}">
+    <div class="section-title">
+      <i class="fas fa-{% if gen == 1 %}crown{% elif gen == 2 %}users{% elif gen == 3 %}child{% else %}baby{% endif %}"></i>
+      Generation {{ gen }} — {{ gen_labels.get(gen, 'Family Members') }}
+    </div>
+    <div class="members-grid">
+      {% for member in generations[gen] %}
+      <a href="{{ url_for('member_detail', member_id=member.id) }}" class="member-card"
+         data-name="{{ member.name|lower }}" data-role="{{ member.role|lower }}" data-occ="{{ member.occupation|lower }}">
+        <div class="member-card-top">
+          <div class="member-photo-wrap">
+            {% if member.photo %}
+              <img src="{{ url_for('static', filename='uploads/' + member.photo) }}"
+                   alt="{{ member.name }}" class="member-photo"/>
+            {% else %}
+              <div class="member-initials">{{ member.name.split()[0][0] }}{{ member.name.split()[-1][0] if member.name.split()|length > 1 else '' }}</div>
+            {% endif %}
+            {% if member.death_year %}
+              <div class="deceased-badge" title="Passed away {{ member.death_year }}"><i class="fas fa-dove"></i></div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="member-card-body">
+          <div class="member-name">{{ member.name }}</div>
+          <div class="member-role">{{ member.role }}</div>
+          <div class="member-years">
+            <i class="fas fa-calendar-alt"></i>
+            {{ member.birth_year }}{% if member.death_year %} – {{ member.death_year }}{% endif %}
+          </div>
+          {% if member.occupation %}
+          <div class="member-occupation"><i class="fas fa-briefcase"></i> {{ member.occupation }}</div>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<div id="noResults" style="display:none; text-align:center; padding:3rem; color:var(--text-muted);">
+  <i class="fas fa-search" style="font-size:3rem; margin-bottom:1rem; display:block;"></i>
+  No family members found matching your search.
+</div>
+
+<script>
+function filterMembers() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const cards = document.querySelectorAll('.member-card');
+  let found = 0;
+  cards.forEach(card => {
+    const match = card.dataset.name.includes(q) || card.dataset.role.includes(q) || card.dataset.occ.includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) found++;
+  });
+  document.querySelectorAll('.generation-section').forEach(section => {
+    const visible = [...section.querySelectorAll('.member-card')].some(c => c.style.display !== 'none');
+    section.style.display = visible ? '' : 'none';
+  });
+  document.getElementById('noResults').style.display = found === 0 ? 'block' : 'none';
+}
+</script>
+{% endblock %}

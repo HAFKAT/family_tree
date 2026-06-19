@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}{{ member.name }}{% endblock %}
+{% block head %}
+<style>
+  .profile-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 70%, var(--primary-light) 100%);
+    border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem;
+    display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;
+  }
+  .profile-photo-wrap { position: relative; flex-shrink: 0; }
+  .profile-photo, .profile-initials {
+    width: 140px; height: 140px; border-radius: 50%;
+    border: 5px solid var(--accent); object-fit: cover;
+  }
+  .profile-initials {
+    background: rgba(255,255,255,0.15); color: white;
+    font-size: 3.5rem; font-weight: 700; font-family: 'Playfair Display', serif;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .profile-deceased {
+    position: absolute; bottom: 5px; right: 5px;
+    background: #6b7280; color: white; border-radius: 50%;
+    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; border: 3px solid var(--accent);
+  }
+  .profile-info { flex: 1; min-width: 200px; }
+  .profile-name { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: #fff; margin-bottom: 0.5rem; }
+  .profile-role-badge {
+    display: inline-block; background: var(--accent); color: var(--primary-dark);
+    padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.9rem; font-weight: 700;
+    margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .profile-meta { display: flex; flex-wrap: wrap; gap: 1rem; }
+  .profile-meta-item { color: rgba(255,255,255,0.8); font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; }
+  .profile-meta-item i { color: var(--accent); }
+  .profile-actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; flex-wrap: wrap; }
+
+  .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+  @media (max-width: 768px) { .content-grid { grid-template-columns: 1fr; } }
+
+  .info-card { background: white; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); padding: 1.75rem; margin-bottom: 1.5rem; }
+  .info-card-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--primary-dark); margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--accent); }
+  .info-card-title i { color: var(--accent); }
+  .bio-text { color: var(--text); line-height: 1.75; font-size: 0.95rem; }
+
+  .relation-list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .relation-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    text-decoration: none; color: inherit; padding: 0.75rem;
+    border-radius: 10px; border: 1px solid var(--border);
+    transition: all 0.2s; background: var(--bg);
+  }
+  .relation-item:hover { background: white; box-shadow: var(--shadow); border-color: var(--primary-light); }
+  .relation-mini-photo, .relation-mini-initials {
+    width: 46px; height: 46px; border-radius: 50%;
+    border: 2px solid var(--accent); object-fit: cover; flex-shrink: 0;
+  }
+  .relation-mini-initials {
+    background: var(--primary); color: white;
+    font-size: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+  }
+  .relation-name { font-weight: 600; font-size: 0.9rem; }
+  .relation-role { color: var(--text-muted); font-size: 0.78rem; }
+  .relation-label {
+    margin-left: auto; font-size: 0.75rem; background: var(--primary);
+    color: white; padding: 0.15rem 0.6rem; border-radius: 20px;
+  }
+  .no-relations { color: var(--text-muted); font-size: 0.9rem; font-style: italic; }
+
+  .breadcrumb { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem; }
+  .breadcrumb a { color: var(--primary); text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+
+  .delete-form { display: inline; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a>
+  <i class="fas fa-chevron-right"></i>
+  <span>{{ member.name }}</span>
+</div>
+
+<div class="profile-header">
+  <div class="profile-photo-wrap">
+    {% if member.photo %}
+      <img src="{{ url_for('static', filename='uploads/' + member.photo) }}" alt="{{ member.name }}" class="profile-photo"/>
+    {% else %}
+      <div class="profile-initials">{{ member.name.split()[0][0] }}{{ member.name.split()[-1][0] if member.name.split()|length > 1 else '' }}</div>
+    {% endif %}
+    {% if member.death_year %}
+      <div class="profile-deceased" title="Passed away"><i class="fas fa-dove"></i></div>
+    {% endif %}
+  </div>
+  <div class="profile-info">
+    <div class="profile-name">{{ member.name }}</div>
+    <div class="profile-role-badge">{{ member.role }}</div>
+    <div class="profile-meta">
+      <div class="profile-meta-item"><i class="fas fa-calendar-alt"></i> Born {{ member.birth_year or 'Unknown' }}</div>
+      {% if member.death_year %}<div class="profile-meta-item"><i class="fas fa-cross"></i> Passed {{ member.death_year }}</div>{% endif %}
+      {% if member.birth_place %}<div class="profile-meta-item"><i class="fas fa-map-marker-alt"></i> {{ member.birth_place }}</div>{% endif %}
+      {% if member.occupation %}<div class="profile-meta-item"><i class="fas fa-briefcase"></i> {{ member.occupation }}</div>{% endif %}
+    </div>
+    <div class="profile-actions">
+      <a href="{{ url_for('edit_member', member_id=member.id) }}" class="btn btn-accent btn-sm"><i class="fas fa-edit"></i> Edit Profile</a>
+      <form class="delete-form" method="POST" action="{{ url_for('delete_member', member_id=member.id) }}"
+            onsubmit="return confirm('Are you sure you want to remove {{ member.name }} from the family tree?');">
+        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Remove</button>
+      </form>
+      <a href="{{ url_for('index') }}" class="btn btn-outline btn-sm" style="color:white; border-color:rgba(255,255,255,0.4);"><i class="fas fa-arrow-left"></i> Back</a>
+    </div>
+  </div>
+</div>
+
+<div class="content-grid">
+  <div>
+    <!-- BIO -->
+    <div class="info-card">
+      <div class="info-card-title"><i class="fas fa-quote-left"></i> About {{ member.name.split()[0] }}</div>
+      <p class="bio-text">{{ member.bio or 'No biography added yet. Click "Edit Profile" to add information about this family member.' }}</p>
+    </div>
+
+    <!-- CHILDREN -->
+    {% if children %}
+    <div class="info-card">
+      <div class="info-card-title"><i class="fas fa-child"></i> Children ({{ children|length }})</div>
+      <div class="relation-list">
+        {% for c in children %}
+        <a href="{{ url_for('member_detail', member_id=c.id) }}" class="relation-item">
+          {% if c.photo %}
+            <img src="{{ url_for('static', filename='uploads/' + c.photo) }}" alt="{{ c.name }}" class="relation-mini-photo"/>
+          {% else %}
+            <div class="relation-mini-initials">{{ c.name.split()[0][0] }}{{ c.name.split()[-1][0] if c.name.split()|length > 1 else '' }}</div>
+          {% endif %}
+          <div><div class="relation-name">{{ c.name }}</div><div class="relation-role">{{ c.occupation or c.role }}</div></div>
+          <div class="relation-label">{{ c.birth_year }}</div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- SIBLINGS -->
+    {% if siblings %}
+    <div class="info-card">
+      <div class="info-card-title"><i class="fas fa-users"></i> Siblings ({{ siblings|length }})</div>
+      <div class="relation-list">
+        {% for s in siblings %}
+        <a href="{{ url_for('member_detail', member_id=s.id) }}" class="relation-item">
+          {% if s.photo %}
+            <img src="{{ url_for('static', filename='uploads/' + s.photo) }}" alt="{{ s.name }}" class="relation-mini-photo"/>
+          {% else %}
+            <div class="relation-mini-initials">{{ s.name.split()[0][0] }}{{ s.name.split()[-1][0] if s.name.split()|length > 1 else '' }}</div>
+          {% endif %}
+          <div><div class="relation-name">{{ s.name }}</div><div class="relation-role">{{ s.occupation or s.role }}</div></div>
+          <div class="relation-label">{{ s.role }}</div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div>
+    <!-- PARENTS -->
+    <div class="info-card">
+      <div class="info-card-title"><i class="fas fa-heart"></i> Parents</div>
+      {% if parents %}
+      <div class="relation-list">
+        {% for p in parents %}
+        <a href="{{ url_for('member_detail', member_id=p.id) }}" class="relation-item">
+          {% if p.photo %}
+            <img src="{{ url_for('static', filename='uploads/' + p.photo) }}" alt="{{ p.name }}" class="relation-mini-photo"/>
+          {% else %}
+            <div class="relation-mini-initials">{{ p.name.split()[0][0] }}{{ p.name.split()[-1][0] if p.name.split()|length > 1 else '' }}</div>
+          {% endif %}
+          <div><div class="relation-name">{{ p.name }}</div><div class="relation-role">{{ p.role }}</div></div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+        <p class="no-relations"><i class="fas fa-info-circle"></i> No parents linked</p>
+      {% endif %}
+    </div>
+
+    <!-- SPOUSE -->
+    <div class="info-card">
+      <div class="info-card-title"><i class="fas fa-ring"></i> Spouse / Partner</div>
+      {% if spouse %}
+      <a href="{{ url_for('member_detail', member_id=spouse.id) }}" class="relation-item">
+        {% if spouse.photo %}
+          <img src="{{ url_for('static', filename='uploads/' + spouse.photo) }}" alt="{{ spouse.name }}" class="relation-mini-photo"/>
+        {% else %}
+          <div class="relation-mini-initials">{{ spouse.name.split()[0][0] }}{{ spouse.name.split()[-1][0] if spouse.name.split()|length > 1 else '' }}</div>
+        {% endif %}
+        <div><div class="relation-name">{{ spouse.name }}</div><div class="relation-role">{{ spouse.role }}</div></div>
+      </a>
+      {% else %}
+        <p class="no-relations"><i class="fas fa-info-circle"></i> No spouse linked</p>
+      {% endif %}
+    </div>
+
+    <!-- GENERATION BADGE -->
+    <div class="info-card">
+      <div class="info-card-title"><i class="fas fa-layer-group"></i> Generation</div>
+      <div style="text-align:center; padding:1rem 0;">
+        <div style="font-size:3rem; font-family:'Playfair Display',serif; color:var(--primary); font-weight:700;">{{ member.generation }}</div>
+        <div style="color:var(--text-muted); font-size:0.9rem;">
+          {% if member.generation == 1 %}Great Grandparents / Grandparents
+          {% elif member.generation == 2 %}Parents & Relatives
+          {% elif member.generation == 3 %}Children & Cousins
+          {% else %}Grandchildren{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

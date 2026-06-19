@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Manage Family Members{% endblock %}
+{% block head %}
+<style>
+  .admin-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+  .admin-table th { background: var(--primary-dark); color: white; text-align: left; padding: 1rem 1.25rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+  .admin-table td { padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .admin-table tr:hover { background: #faf8f3; }
+  .member-mini { display: flex; align-items: center; gap: 0.75rem; }
+  .member-mini img, .member-mini .initial { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
+  .member-mini .initial { background: var(--primary); color: white; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: 'Playfair Display', serif; }
+  .actions { display: flex; gap: 0.4rem; }
+  .gen-badge { font-size: 0.7rem; background: var(--primary); color: white; padding: 2px 8px; border-radius: 10px; }
+</style>
+{% endblock %}
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+  <div>
+    <h1 style="font-family:'Playfair Display',serif; font-size:1.8rem; color:var(--primary-dark); margin:0;">
+      <i class="fas fa-users"></i> Manage Family Members
+    </h1>
+    <p style="margin:0.25rem 0 0; color:#666;">{{ members|length }} total members</p>
+  </div>
+  <div style="display:flex; gap:0.5rem;">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    <a href="{{ url_for('admin_add_member') }}" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Add Member</a>
+  </div>
+</div>
+
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Member</th>
+      <th>Role</th>
+      <th>Generation</th>
+      <th>Years</th>
+      <th style="width:150px;">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in members %}
+    <tr>
+      <td>
+        <div class="member-mini">
+          {% if m.photo %}
+            <img src="{{ url_for('static', filename='uploads/' + m.photo) }}" alt="{{ m.name }}">
+          {% else %}
+            <div class="initial">{{ m.name.split()[0][0] }}{{ m.name.split()[-1][0] if m.name.split()|length > 1 else '' }}</div>
+          {% endif %}
+          <div>
+            <a href="{{ url_for('member_detail', member_id=m.id) }}" style="font-weight:600; color:var(--primary); text-decoration:none;">{{ m.name }}</a>
+            {% if m.occupation %}<div style="font-size:0.75rem; color:#666;">{{ m.occupation }}</div>{% endif %}
+          </div>
+        </div>
+      </td>
+      <td><span style="background:#e5e0d5; padding:2px 8px; border-radius:4px; font-size:0.8rem;">{{ m.role }}</span></td>
+      <td><span class="gen-badge">Gen {{ m.generation }}</span></td>
+      <td style="color:#555; font-size:0.9rem;">
+        {{ m.birth_year }}{% if m.death_year %} – {{ m.death_year }}{% endif %}
+      </td>
+      <td>
+        <div class="actions">
+          <a href="{{ url_for('admin_edit_member', member_id=m.id) }}" class="btn btn-accent btn-sm"><i class="fas fa-edit"></i></a>
+          <a href="{{ url_for('member_detail', member_id=m.id) }}" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i></a>
+          <form method="POST" action="{{ url_for('admin_delete_member', member_id=m.id) }}"
+                onsubmit="return confirm('Remove {{ m.name }} from the family tree?');" style="display:inline;">
+            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div style="margin-top:1.5rem; text-align:center;">
+  <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline">← Back to Dashboard</a>
+</div>
+{% endblock %}
